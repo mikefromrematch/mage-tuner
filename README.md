@@ -52,7 +52,15 @@ To build on your own machine instead:
 npm run dist
 ```
 
-The builds aren't signed, so macOS will block the first launch. Right-click the app → **Open** to allow it.
+The Mac build is only ad-hoc signed (no paid Apple Developer ID), so macOS blocks the first launch.
+Click **Done**, then go to **System Settings → Privacy & Security** and click **Open Anyway**.
+
+If an older download says *"MAGE Tuner is damaged and can't be opened"*, run:
+
+```bash
+xattr -cr "/Applications/MAGE Tuner.app"
+codesign --force --deep --sign - "/Applications/MAGE Tuner.app"
+```
 Windows SmartScreen may show a warning too; choose **More info → Run anyway**.
 
 ## Notes

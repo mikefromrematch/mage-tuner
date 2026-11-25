@@ -15,13 +15,26 @@
   "build": {
     "appId": "com.mikefromrematch.magetuner",
     "productName": "MAGE Tuner",
-    "files": ["index.html", "main.js", "preload.js", "package.json"],
+    "files": [
+      "index.html",
+      "main.js",
+      "preload.js",
+      "package.json"
+    ],
     "mac": {
       "target": "dmg",
       "category": "public.app-category.music",
-      "extendInfo": { "NSMicrophoneUsageDescription": "MAGE Tuner listens to your instrument to tune it." }
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "MAGE Tuner listens to your instrument to tune it."
+      },
+      "identity": null
     },
-    "win": { "target": "nsis" },
-    "linux": { "target": "AppImage" }
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    },
+    "afterPack": "build/adhoc-sign.js"
   }
 }
