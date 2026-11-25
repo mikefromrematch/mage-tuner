@@ -107,8 +107,13 @@ body.web.mode-overlay .shell{width:min(380px,100%);box-shadow:none}
 .mode-overlay .shell:hover .mini-tools,.mode-overlay .mini-tools:focus-within{opacity:1}
 .mini-tools .btn{min-height:28px;height:28px;padding:0 8px;font-size:12px;background:rgba(0,0,0,.55)}
 .mini-tools input{width:70px;accent-color:var(--pink)}
-.grip{cursor:grab;width:28px;display:grid;place-items:center;color:var(--mute);font-size:16px;-webkit-app-region:no-drag}
-.mode-overlay.through .shell:hover{outline:none}
+/* click-through: only the off button stays clickable (main process makes it "hot" on hover) */
+body.through .shell,body.through .readout{-webkit-app-region:no-drag}
+body.through .shell:hover{outline:none}
+body.through .mini-tools{opacity:1}
+body.through .mini-tools>:not(#throughBtn){display:none}
+body.through #throughBtn{opacity:.6;border-color:var(--pink);color:var(--pink);box-shadow:0 0 10px rgba(255,112,213,.35)}
+body.through #throughBtn:hover{opacity:1}
 @media (prefers-reduced-motion:reduce){#needle,.leds i,.note{transition:none}}
 @media (max-width:380px){.note{font-size:78px}}
 </style>
@@ -155,9 +160,8 @@ body.web.mode-overlay .shell{width:min(380px,100%);box-shadow:none}
   </section>
 
   <div class="mini-tools nodrag">
-    <span class="grip" id="grip" title="Hover here to grab the tuner while click-through is on">⠿</span>
     <input type="range" id="glass" min="0" max="1" step="0.05" aria-label="Background opacity" title="Background opacity">
-    <button class="btn" id="throughBtn" aria-pressed="false" title="Clicks pass through to apps underneath — Ctrl/Cmd+Alt+Shift+C">Click-through</button>
+    <button class="btn hot" id="throughBtn" aria-pressed="false" title="Clicks pass through to apps underneath — Ctrl/Cmd+Alt+Shift+C">Click-through</button>
     <button class="btn" id="backBtn" title="Back to full tuner">Expand</button>
   </div>
 </div>
@@ -353,11 +357,20 @@ function setMode(m){
   if(m!=='overlay') setThrough(false);
   desk && desk.setMode(m);
 }
-function setThrough(v){
+// The desktop app owns the click-through state; the page only asks for changes and shows them.
+function showThrough(v){
   S.through=v; document.body.classList.toggle('through', v);
-  $('throughBtn').setAttribute('aria-pressed', v); $('throughBtn').textContent = v ? 'Click-through on' : 'Click-through';
-  desk && desk.setClickThrough(v);
+  $('throughBtn').setAttribute('aria-pressed', v);
+  $('throughBtn').textContent = v ? 'Turn off click-through' : 'Click-through';
+  if(!v) hot=false;
 }
+function setThrough(v){ if(desk) desk.setClickThrough(v); else showThrough(v); }
+// While click-through is on, mouse moves are still forwarded to the page.
+// When the pointer is over the off button, ask the window to accept clicks again.
+let hot=false;
+function setHot(v){ if(v!==hot){ hot=v; desk && desk.setHot(v); } }
+document.addEventListener('mousemove', e=>{ if(S.through) setHot(!!(e.target.closest && e.target.closest('.hot'))); });
+document.addEventListener('mouseleave', ()=>{ if(S.through) setHot(false); });
 function setGlass(v){ S.glass=v; document.documentElement.style.setProperty('--glass', v); $('glass').value=v; store.set('glass', v); }
 $('modeBtn').onclick=()=>setMode('overlay');
 $('backBtn').onclick=()=>setMode('full');
@@ -366,13 +379,10 @@ $('glass').addEventListener('input', e=>setGlass(+e.target.value));
 $('pinBtn').onclick=()=>{ S.pin=!S.pin; $('pinBtn').setAttribute('aria-pressed',S.pin); desk && desk.setPin(S.pin); };
 $('minBtn').onclick=()=>desk && desk.minimize();
 $('closeBtn').onclick=()=>desk && desk.close();
-// While click-through is on, hovering the grip makes the window grabbable again.
-$('grip').addEventListener('mouseenter', ()=>{ if(S.through && desk) desk.setClickThrough(false); });
-shell.addEventListener('mouseleave', ()=>{ if(S.through && desk) desk.setClickThrough(true); });
 setGlass(S.glass);
 if(desk){
   desk.on('toggle-mode', ()=>setMode(S.mode==='overlay'?'full':'overlay'));
-  desk.on('toggle-through', ()=>{ if(S.mode!=='overlay') setMode('overlay'); setThrough(!S.through); });
+  desk.on('through-changed', v=>{ if(v && S.mode!=='overlay') setMode('overlay'); showThrough(!!v); });
   start();
 }
 }

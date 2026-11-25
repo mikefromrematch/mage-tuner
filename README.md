@@ -28,7 +28,8 @@ The first time, allow microphone access. On macOS that's under System Settings �
 | Back to full mode | Hover the strip → **Expand**, or the same shortcut |
 | Background opacity | Hover the strip → slider (all the way left = fully transparent) |
 | Click-through | Hover → **Click-through**, or `Ctrl/Cmd + Alt + Shift + C` from any app |
-| Move it while click-through is on | Hover the ⠿ grip, then drag |
+| Turn click-through off | Click **Turn off click-through** on the strip (it stays clickable), click MAGE Tuner in the Dock/taskbar, use **Tuner → Click-through** in the menu bar (Mac), or the shortcut |
+| Move the strip | Turn click-through off, then drag it |
 | Lock to one string | Tap a string button (tap again to go back to auto) |
 | Audio interface | Pick it under **Input**. Echo cancellation, noise suppression and auto-gain are turned off so the pitch reads accurately |
 
