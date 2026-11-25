@@ -1,0 +1,27 @@
+{
+  "name": "mage-tuner",
+  "version": "0.1.0",
+  "description": "MAGE guitar tuner with a transparent, always-on-top desktop mode",
+  "main": "main.js",
+  "author": "mikefromrematch",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --publish never"
+  },
+  "devDependencies": {
+    "electron": "^37.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "com.mikefromrematch.magetuner",
+    "productName": "MAGE Tuner",
+    "files": ["index.html", "main.js", "preload.js", "package.json"],
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.music",
+      "extendInfo": { "NSMicrophoneUsageDescription": "MAGE Tuner listens to your instrument to tune it." }
+    },
+    "win": { "target": "nsis" },
+    "linux": { "target": "AppImage" }
+  }
+}

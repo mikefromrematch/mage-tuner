@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MAGE Tuner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Barlow+Condensed:wght@500;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/*
+VOICE: MAGE family — arcane gear, glowing runes on dark forged steel.
+IDEA: a scrying glass set into a MAGE pedal: hex crest, rune dial, diamond sigils.
+PICTURE: the live dial + sigil strip is the whole page; the app itself is the picture.
+COLOUR and TYPE: MAGE palette (steel #151d2b, inset #090f19, cyan #59ddff, blue #458bff, pink #ff70d5); cyan = in tune, pink = off. Cinzel for the note.
+LAYOUT: full mode = upright pedal; desktop mode = slim floating strip with a see-through body.
+*/
+:root{color-scheme:dark;--encl:21,29,43;--encl2:#090f19;--ivory:#edf4ff;--mute:#91a3ba;--cyan:#59ddff;--blue:#458bff;--pink:#ff70d5;--edge:#40536a;--glass:.55;
+  --cond:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;--rune:Cinzel,"Trajan Pro",Georgia,serif;--body:Barlow,system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0;height:100%}
+body{background:transparent;color:var(--ivory);font:15px/1.45 var(--body);overflow:hidden;user-select:none}
+body.web{background:radial-gradient(ellipse at 50% 30%,#111a2c,#070911 70%);overflow:auto;display:grid;place-items:center;min-height:100%;padding:24px 12px}
+/* faux desktop behind the overlay in the browser preview */
+body.web.mode-overlay{background:
+  repeating-linear-gradient(180deg,transparent 0 58px,rgba(255,255,255,.05) 58px 60px),
+  repeating-linear-gradient(90deg,transparent 0 119px,rgba(255,255,255,.04) 119px 120px),
+  linear-gradient(135deg,#3a2f5c,#1d4d5c 55%,#2c5b3f)}
+body.web.mode-overlay::after{content:"Preview: in the desktop app this area is your actual desktop / DAW";position:fixed;bottom:14px;left:0;right:0;text-align:center;font-size:13px;color:rgba(255,255,255,.7)}
+
+.shell{position:relative;background:linear-gradient(160deg,#26364a,#151d2b 45%,#101722);border:1px solid var(--edge);border-radius:18px;display:flex;flex-direction:column;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 -2px 0 rgba(0,0,0,.35)}
+body.desk .shell{height:100vh;width:100vw}
+body.web .shell{width:min(420px,100%);box-shadow:0 24px 60px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.08)}
+.drag{-webkit-app-region:drag}
+button,select,input,.nodrag{-webkit-app-region:no-drag}
+
+.bar{display:flex;align-items:center;gap:8px;padding:12px 14px 6px 18px}
+.brand{display:flex;align-items:center;gap:8px;flex:1;font:700 19px/1 var(--rune);color:var(--pink);text-shadow:0 0 12px rgba(255,112,213,.45)}
+.brand small{font:600 12px/1 var(--body);color:var(--mute);letter-spacing:.04em;text-shadow:none}
+.crest{width:26px;height:26px;flex:none;filter:drop-shadow(0 0 6px rgba(89,221,255,.5))}
+.btn{font:600 13px/1 var(--body);color:var(--ivory);background:rgba(9,15,25,.6);border:1px solid var(--edge);
+  border-radius:10px;min-height:34px;padding:0 12px;cursor:pointer}
+.btn:hover{background:rgba(0,0,0,.4)}
+.btn:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.btn[aria-pressed=true]{border-color:var(--cyan);color:var(--cyan)}
+.btn.icon{width:34px;padding:0;font-size:18px}
+.btn.go{background:linear-gradient(90deg,var(--cyan),var(--blue) 55%,var(--pink));color:#070911;border-color:transparent;box-shadow:0 0 18px rgba(89,221,255,.3);min-height:44px;font-size:15px}
+body.web .eonly{display:none}
+
+/* screen */
+.readout{position:relative;margin:6px 14px 0;border-radius:14px;padding:14px 14px 12px;text-align:center;border:1px solid rgba(89,221,255,.22);
+  background:radial-gradient(circle at 50% 30%,rgba(89,221,255,.13),transparent 55%),radial-gradient(circle at 50% 95%,rgba(255,112,213,.10),transparent 50%),var(--encl2);
+  box-shadow:inset 0 2px 14px rgba(0,0,0,.7),0 0 0 3px rgba(9,15,25,.6)}
+.note{font:700 96px/1 var(--rune);transition:color .15s,opacity .2s,text-shadow .15s;text-shadow:0 0 18px rgba(237,244,255,.18)}
+.note sub{font:600 .28em var(--body);vertical-align:baseline;margin-left:3px;color:var(--mute)}
+.dial{width:100%;max-width:330px;height:auto;display:block;margin:2px auto 0}
+.dial .tk{stroke:var(--mute);stroke-width:1.5}.dial .tk.big{stroke:var(--ivory);stroke-width:2.5}
+.dial text{fill:var(--mute);font:500 12px var(--body)}
+.dial .zone{stroke:var(--cyan);stroke-width:7;fill:none;opacity:.45;filter:drop-shadow(0 0 4px var(--cyan))}
+.dial .ring{stroke:var(--blue);stroke-width:1;fill:none;opacity:.5}
+.dial .glyph{stroke:var(--pink);stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:.75}
+#needle{transform-box:view-box;transform-origin:150px 158px;transition:transform .09s linear}
+#needle line{stroke:url(#ndl);stroke-width:3;stroke-linecap:round;filter:drop-shadow(0 0 5px rgba(255,112,213,.8))}
+.dial .hub{fill:#101827;stroke:var(--cyan);stroke-width:2}
+.leds{display:grid;grid-template-columns:repeat(21,1fr);gap:3px;margin:12px 4px 2px;justify-items:center;align-items:center}
+.leds i{width:9px;aspect-ratio:1;transform:rotate(45deg);border-radius:1px;background:rgba(145,163,186,.16);transition:background .08s,box-shadow .08s}
+.leds i:nth-child(11){width:13px;outline:1px solid rgba(89,221,255,.45);outline-offset:2px}
+.leds i.on{background:var(--pink);box-shadow:0 0 8px var(--pink)}
+.leds i.near{background:rgba(255,112,213,.35)}
+.leds i:nth-child(11).on{background:var(--cyan);box-shadow:0 0 12px var(--cyan)}
+.nums{display:flex;justify-content:space-between;margin-top:8px;font:600 15px var(--body);font-variant-numeric:tabular-nums;color:var(--mute)}
+.nums span{white-space:nowrap}
+.status{margin-top:4px;font:500 16px var(--body);min-height:24px}
+.shell[data-state=in] .note,.shell[data-state=in] .status{color:var(--cyan)}
+.shell[data-state=in] .note{text-shadow:0 0 24px rgba(89,221,255,.75)}
+.shell[data-state=in] #needle line{stroke:var(--cyan);filter:drop-shadow(0 0 6px var(--cyan))}
+.shell[data-state=off] .note{color:var(--ivory)}
+.shell[data-state=idle] .note,.shell[data-state=idle] .nums{opacity:.35}
+
+.strings{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:12px 14px 4px}
+.str{font:700 17px/1 var(--cond);min-width:44px;min-height:44px;border-radius:50%;padding:0 6px;
+  background:rgba(9,15,25,.65);color:var(--ivory);border:1.5px solid var(--edge);cursor:pointer;font-family:var(--rune);font-size:16px}
+.str sub{font-size:11px;color:var(--mute)}
+.str.hit{border-color:var(--pink);box-shadow:0 0 10px rgba(255,112,213,.4)}.str.hit.in{border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 12px rgba(89,221,255,.55)}
+.str.lock{background:linear-gradient(135deg,var(--cyan),var(--pink));color:#070911;border-color:transparent}.str.lock sub{color:#26364a}
+.hint{text-align:center;font-size:13px;color:var(--mute);margin:2px 0 0}
+
+.controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px 10px;padding:12px 14px 16px;margin-top:auto}
+.controls label{display:grid;gap:4px;font-size:13px;color:var(--mute)}
+.controls .wide{grid-column:1/-1}
+select{font:500 15px var(--body);color:var(--ivory);background:rgba(9,15,25,.65);border:1px solid var(--edge);border-radius:10px;min-height:40px;padding:0 8px;width:100%}
+.step{display:flex;align-items:center;gap:6px}
+.step output{flex:1;text-align:center;font:600 16px var(--body);font-variant-numeric:tabular-nums;color:var(--ivory)}
+
+.mini-tools{display:none}
+
+/* ---------- desktop (overlay) mode ---------- */
+.mode-overlay .shell{background:rgba(var(--encl),var(--glass));border-color:rgba(64,83,106,calc(var(--glass) + .15));border-radius:16px;-webkit-app-region:drag}
+.mode-overlay .shell:hover{outline:1px solid rgba(89,221,255,.35)}
+body.web.mode-overlay .shell{width:min(380px,100%);box-shadow:none}
+.mode-overlay .bar,.mode-overlay .strings,.mode-overlay .controls,.mode-overlay .dial,.mode-overlay .status,.mode-overlay .hint{display:none}
+.mode-overlay .readout{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:4px 14px;margin:0;padding:12px 14px 44px 16px;align-content:start;background:transparent;box-shadow:none;text-align:left;flex:1}
+.mode-overlay .note{font-size:64px;grid-row:1/4;align-self:center;text-shadow:0 1px 3px rgba(0,0,0,.7);min-width:1.4em;text-align:center}
+.mode-overlay .leds{margin:0}.mode-overlay .leds i:not(.on):not(.near){background:rgba(145,163,186,.3)}
+.mode-overlay .nums{margin:0;color:var(--ivory);text-shadow:0 1px 2px rgba(0,0,0,.8)}
+.mode-overlay .mini-tools{display:flex;position:absolute;bottom:8px;right:10px;align-items:center;gap:4px;opacity:0;transition:opacity .15s}
+.mode-overlay .shell:hover .mini-tools,.mode-overlay .mini-tools:focus-within{opacity:1}
+.mini-tools .btn{min-height:28px;height:28px;padding:0 8px;font-size:12px;background:rgba(0,0,0,.55)}
+.mini-tools input{width:70px;accent-color:var(--pink)}
+.grip{cursor:grab;width:28px;display:grid;place-items:center;color:var(--mute);font-size:16px;-webkit-app-region:no-drag}
+.mode-overlay.through .shell:hover{outline:none}
+@media (prefers-reduced-motion:reduce){#needle,.leds i,.note{transition:none}}
+@media (max-width:380px){.note{font-size:78px}}
+</style>
+</head>
+<body class="mode-full">
+<div class="shell" id="shell" data-state="idle">
+  <header class="bar drag">
+    <span class="brand"><svg class="crest" viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="ink" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#59ddff"/><stop offset="1" stop-color="#ff70d5"/></linearGradient></defs><path d="M20 2 36.4 10v19.2L20 38 3.6 29.2V10Z" fill="rgba(89,221,255,.08)" stroke="#59ddff" stroke-width="1.8" stroke-linejoin="round"/><path d="M20 9v20M13 13c0 7 14 7 14 0M14 31h12" fill="none" stroke="url(#ink)" stroke-width="2.4" stroke-linecap="round"/><circle cx="20" cy="33.5" r="1.6" fill="#ff70d5"/></svg>MAGE <small>TUNER</small></span>
+    <button class="btn" id="pinBtn" aria-pressed="false" title="Keep window above others">Pin</button>
+    <button class="btn" id="modeBtn" title="Desktop mode — Ctrl/Cmd+Alt+Shift+T">Desktop mode</button>
+    <button class="btn icon eonly" id="minBtn" aria-label="Minimize">–</button>
+    <button class="btn icon eonly" id="closeBtn" aria-label="Close">×</button>
+  </header>
+
+  <section class="readout" aria-live="polite">
+    <div class="note"><span id="note">–</span><sub id="oct"></sub></div>
+    <svg class="dial" id="dial" viewBox="0 0 300 170" aria-hidden="true">
+      <defs><linearGradient id="ndl" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#458bff"/><stop offset="1" stop-color="#ff70d5"/></linearGradient></defs>
+      <path class="ring" id="ring"/>
+      <g id="ticks"></g>
+      <path class="zone" id="zone"/>
+      <g id="needle"><line x1="150" y1="158" x2="150" y2="36"/></g>
+      <circle class="hub" cx="150" cy="158" r="6"/>
+    </svg>
+    <div class="leds" id="leds"></div>
+    <div class="nums"><span id="cents">— ¢</span><span id="hz">— Hz</span></div>
+    <div class="status" id="status">Press Start to listen</div>
+  </section>
+
+  <section class="strings" id="strings"></section>
+  <p class="hint" id="hint">Auto-detects the nearest string. Tap a string to lock to it.</p>
+
+  <section class="controls">
+    <button class="btn go wide" id="startBtn">Start listening</button>
+    <label class="wide">Input
+      <select id="device"><option value="">Default input</option></select>
+    </label>
+    <label>Tuning
+      <select id="preset"></select>
+    </label>
+    <label>Reference A4
+      <span class="step"><button class="btn icon" id="aDown" aria-label="Lower reference">−</button><output id="a4">440 Hz</output><button class="btn icon" id="aUp" aria-label="Raise reference">+</button></span>
+    </label>
+  </section>
+
+  <div class="mini-tools nodrag">
+    <span class="grip" id="grip" title="Hover here to grab the tuner while click-through is on">⠿</span>
+    <input type="range" id="glass" min="0" max="1" step="0.05" aria-label="Background opacity" title="Background opacity">
+    <button class="btn" id="throughBtn" aria-pressed="false" title="Clicks pass through to apps underneath — Ctrl/Cmd+Alt+Shift+C">Click-through</button>
+    <button class="btn" id="backBtn" title="Back to full tuner">Expand</button>
+  </div>
+</div>
+
+<script>
+{
+const $ = id => document.getElementById(id);
+const desk = window.desk || null;
+document.body.classList.add(desk ? 'desk' : 'web');
+
+const NAMES = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+const PRESETS = {
+  standard:{label:'Standard (E A D G B E)',notes:[40,45,50,55,59,64]},
+  dropd:{label:'Drop D',notes:[38,45,50,55,59,64]},
+  half:{label:'Half step down (E♭)',notes:[39,44,49,54,58,63]},
+  dstd:{label:'Whole step down (D)',notes:[38,43,48,53,57,62]},
+  dropc:{label:'Drop C',notes:[36,43,48,53,57,62]},
+  dadgad:{label:'DADGAD',notes:[38,45,50,55,57,62]},
+  openg:{label:'Open G',notes:[38,43,50,55,59,62]},
+  opend:{label:'Open D',notes:[38,45,50,54,57,62]},
+  bass:{label:'Bass 4-string (E A D G)',notes:[28,33,38,43]},
+  bass5:{label:'Bass 5-string (B E A D G)',notes:[23,28,33,38,43]},
+  chromatic:{label:'Chromatic (any note)',notes:[]}
+};
+const store = {
+  get(k,d){try{const v=localStorage.getItem('mage-tuner.'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+  set(k,v){try{localStorage.setItem('mage-tuner.'+k,JSON.stringify(v))}catch(e){}}
+};
+const S = {preset:store.get('preset','standard'),a4:store.get('a4',440),glass:store.get('glass',.55),
+  device:store.get('device',''),lock:null,mode:'full',through:false,pin:false};
+if(!PRESETS[S.preset]) S.preset='standard';
+
+const shell=$('shell'), noteEl=$('note'), octEl=$('oct'), centsEl=$('cents'), hzEl=$('hz'), statusEl=$('status');
+const hz = m => S.a4 * 2 ** ((m - 69) / 12);
+const nameOf = m => NAMES[((m % 12) + 12) % 12];
+const octOf = m => Math.floor(m / 12) - 1;
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+
+/* ----- dial ----- */
+const pt = (c,r) => { const a = c * 1.2 * Math.PI / 180; return [150 + r * Math.sin(a), 158 - r * Math.cos(a)]; };
+let tk='';
+for(let c=-50;c<=50;c+=5){
+  const big = c % 25 === 0, [x1,y1] = pt(c,130), [x2,y2] = pt(c, big?114:121);
+  tk += `<line class="tk${big?' big':''}" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;
+  if(big){const [tx,ty]=pt(c,98);tk+=`<text x="${tx.toFixed(1)}" y="${(ty+4).toFixed(1)}" text-anchor="middle">${c>0?'+'+c:c===0?'0':'−'+(-c)}</text>`;}
+}
+$('ticks').innerHTML = tk;
+{const [rx,ry]=pt(-56,142),[sx,sy]=pt(56,142);$('ring').setAttribute('d',`M${rx} ${ry} A142 142 0 0 1 ${sx} ${sy}`);
+ const g=(c,d)=>{const [x,y]=pt(c,146);return `<path class="glyph" transform="translate(${x.toFixed(1)} ${y.toFixed(1)})" d="${d}"/>`;};
+ // small original sigils: flat (descending) and sharp (ascending) marks
+ $('ticks').insertAdjacentHTML('beforeend', g(-60,'M-5 -6 0 0 5 -6M0 0V7')+g(60,'M-5 6 0 0 5 6M0 0V-7'));}
+{const [ax,ay]=pt(-5,138),[bx,by]=pt(5,138);$('zone').setAttribute('d',`M${ax} ${ay} A138 138 0 0 1 ${bx} ${by}`);}
+$('leds').innerHTML = '<i></i>'.repeat(21);
+const leds = [...$('leds').children];
+
+/* ----- tuning + strings ----- */
+$('preset').innerHTML = Object.entries(PRESETS).map(([k,p])=>`<option value="${k}">${p.label}</option>`).join('');
+$('preset').value = S.preset;
+function drawStrings(){
+  const n = PRESETS[S.preset].notes;
+  $('strings').innerHTML = n.map(m=>`<button class="str${S.lock===m?' lock':''}" data-m="${m}" aria-pressed="${S.lock===m}">${nameOf(m)}<sub>${octOf(m)}</sub></button>`).join('');
+  $('strings').hidden = !n.length; $('hint').hidden = !n.length;
+}
+$('strings').addEventListener('click', e=>{
+  const b = e.target.closest('.str'); if(!b) return;
+  const m = +b.dataset.m; S.lock = S.lock===m ? null : m; drawStrings(); lastMidi=null;
+});
+$('preset').addEventListener('change', e=>{S.preset=e.target.value;S.lock=null;store.set('preset',S.preset);drawStrings();});
+drawStrings();
+
+function setA4(v){S.a4=clamp(v,415,466);store.set('a4',S.a4);$('a4').textContent=S.a4+' Hz';}
+$('aDown').onclick=()=>setA4(S.a4-1); $('aUp').onclick=()=>setA4(S.a4+1); setA4(S.a4);
+
+/* ----- pitch detection (YIN) ----- */
+let dBuf = new Float32Array(2048);
+function yin(b, sr, fmin, fmax){
+  const W = 2048, tMin = Math.max(2, Math.floor(sr / fmax)), tMax = Math.min(Math.ceil(sr / fmin), b.length - W - 2);
+  if(dBuf.length < tMax + 2) dBuf = new Float32Array(tMax + 2);
+  const d = dBuf; d[0] = 1; let run = 0;
+  for(let t=1;t<=tMax+1;t++){
+    let s=0; for(let i=0;i<W;i++){const x=b[i]-b[i+t]; s+=x*x;}
+    run += s; d[t] = run ? s * t / run : 1;
+  }
+  let tau = -1;
+  for(let t=tMin;t<=tMax;t++){ if(d[t] < 0.12){ while(t+1<=tMax && d[t+1]<d[t]) t++; tau=t; break; } }
+  if(tau < 0) return null;
+  const a=d[tau-1], c0=d[tau], c=d[tau+1], den=a+c-2*c0;
+  return sr / (tau + (den ? (a - c) / (2 * den) : 0));
+}
+const median = a => { const s=[...a].sort((x,y)=>x-y); return s[s.length>>1]; };
+function fmin(){ const n=PRESETS[S.preset].notes; return Math.max(28, (n.length ? hz(Math.min(...n)) : 38/0.75) * 0.75); }
+
+let hist=[], lastSig=0, dc=0, lastMidi=null;
+function analyze(b, sr){
+  let e=0; for(let i=0;i<b.length;i++) e+=b[i]*b[i];
+  const rms = Math.sqrt(e / b.length), now = performance.now();
+  const f = rms > 0.005 ? yin(b, sr, fmin(), 1400) : null;
+  if(!f){ if(now - lastSig > 450) idle(); return; }
+  lastSig = now;
+  if(hist.length && Math.abs(1200 * Math.log2(f / median(hist))) > 60) hist = [];
+  hist.push(f); if(hist.length > 5) hist.shift();
+  show(median(hist));
+}
+function show(f){
+  const m = 69 + 12 * Math.log2(f / S.a4);
+  const target = S.lock != null ? S.lock : Math.round(m);
+  const c = (m - target) * 100;
+  if(target !== lastMidi){ dc = c; lastMidi = target; } else dc = dc * .55 + c * .45;
+  const inTune = Math.abs(dc) < 3;
+  shell.dataset.state = inTune ? 'in' : 'off';
+  noteEl.textContent = nameOf(target); octEl.textContent = octOf(target);
+  centsEl.textContent = (dc >= 0 ? '+' : '−') + Math.abs(dc).toFixed(0) + ' ¢';
+  hzEl.textContent = f.toFixed(1) + ' Hz';
+  $('needle').style.transform = `rotate(${clamp(dc,-50,50)*1.2}deg)`;
+  const idx = Math.round(clamp(dc,-50,50) / 5) + 10;
+  leds.forEach((l,i)=>{ l.className = i===idx ? 'on' : (Math.abs(i-idx)===1 && !inTune ? 'near' : ''); });
+  statusEl.textContent = inTune ? 'In tune' : Math.abs(dc) > 50 ? (dc < 0 ? 'Way flat — tune up' : 'Way sharp — tune down') : (dc < 0 ? 'Flat — tune up ↑' : 'Sharp — tune down ↓');
+  const near = nearestString(m);
+  document.querySelectorAll('.str').forEach(b=>{
+    const hit = +b.dataset.m === (S.lock ?? near);
+    b.classList.toggle('hit', hit); b.classList.toggle('in', hit && inTune);
+  });
+}
+function nearestString(m){
+  const n = PRESETS[S.preset].notes; let best=null, bd=2.5;
+  for(const s of n){ const d=Math.abs(m-s); if(d<bd){bd=d;best=s;} }
+  return best;
+}
+function idle(){
+  if(shell.dataset.state==='idle') return;
+  shell.dataset.state='idle'; statusEl.textContent='Listening… play a string'; hist=[];
+  leds.forEach(l=>l.className=''); document.querySelectorAll('.str').forEach(b=>b.classList.remove('hit','in'));
+}
+
+/* ----- audio input ----- */
+let ctx=null, an=null, stream=null, buf=null, timer=null;
+function stop(){
+  clearInterval(timer); timer=null;
+  if(stream) stream.getTracks().forEach(t=>t.stop());
+  if(ctx) ctx.close().catch(()=>{});
+  stream=ctx=an=null;
+}
+async function start(){
+  stop();
+  let s;
+  try{
+    s = await navigator.mediaDevices.getUserMedia({audio:{deviceId:S.device?{exact:S.device}:undefined,
+      echoCancellation:false,noiseSuppression:false,autoGainControl:false,channelCount:1}});
+  }catch(e){
+    if(S.device){ S.device=''; store.set('device',''); return start(); }
+    statusEl.textContent = 'No microphone access here — showing a demo signal';
+    return startDemo();
+  }
+  stream = s;
+  ctx = new (window.AudioContext||window.webkitAudioContext)();
+  if(ctx.state==='suspended') ctx.resume().catch(()=>{});
+  an = ctx.createAnalyser(); an.fftSize = 8192;
+  ctx.createMediaStreamSource(stream).connect(an);
+  buf = new Float32Array(an.fftSize);
+  $('startBtn').textContent='Stop listening'; statusEl.textContent='Listening… play a string';
+  listDevices();
+  timer = setInterval(()=>{ an.getFloatTimeDomainData(buf); analyze(buf, ctx.sampleRate); }, 33);
+}
+function startDemo(){
+  stop();
+  const sr=48000, b=new Float32Array(6144), t0=performance.now();
+  $('startBtn').textContent='Stop demo';
+  timer = setInterval(()=>{
+    const n = PRESETS[S.preset].notes.length ? PRESETS[S.preset].notes : [45,52,57];
+    const el=(performance.now()-t0)/1000, seg=Math.floor(el/4), p=el%4;
+    if(p<0.5){ b.fill(0); return analyze(b,sr); }
+    const sign = seg%2 ? 1 : -1, off = sign*34*Math.exp(-1.3*(p-.5)) + 0.8*Math.sin(p*6);
+    const f = hz(n[seg%n.length]) * 2 ** (off/1200), amp = .3*Math.exp(-.3*p), w = 2*Math.PI*f/sr;
+    for(let i=0;i<b.length;i++){ b[i]=amp*(Math.sin(w*i)+.5*Math.sin(2*w*i+.3)+.25*Math.sin(3*w*i+.9))+(Math.random()-.5)*.004; }
+    analyze(b,sr);
+  }, 33);
+}
+async function listDevices(){
+  try{
+    const ds = (await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='audioinput');
+    const sel=$('device'); sel.innerHTML='';
+    ds.forEach((d,i)=>{const o=document.createElement('option');o.value=d.deviceId;o.textContent=d.label||('Input '+(i+1));sel.appendChild(o);});
+    const cur = stream && stream.getAudioTracks()[0]?.getSettings().deviceId;
+    if(cur) sel.value=cur;
+  }catch(e){}
+}
+$('device').addEventListener('change', e=>{S.device=e.target.value;store.set('device',S.device);start();});
+$('startBtn').addEventListener('click', ()=>{ if(timer){ stop(); idle(); statusEl.textContent='Stopped'; $('startBtn').textContent='Start listening'; } else start(); });
+
+/* ----- window modes ----- */
+function setMode(m){
+  S.mode=m; document.body.classList.toggle('mode-overlay', m==='overlay'); document.body.classList.toggle('mode-full', m!=='overlay');
+  if(m!=='overlay') setThrough(false);
+  desk && desk.setMode(m);
+}
+function setThrough(v){
+  S.through=v; document.body.classList.toggle('through', v);
+  $('throughBtn').setAttribute('aria-pressed', v); $('throughBtn').textContent = v ? 'Click-through on' : 'Click-through';
+  desk && desk.setClickThrough(v);
+}
+function setGlass(v){ S.glass=v; document.documentElement.style.setProperty('--glass', v); $('glass').value=v; store.set('glass', v); }
+$('modeBtn').onclick=()=>setMode('overlay');
+$('backBtn').onclick=()=>setMode('full');
+$('throughBtn').onclick=()=>setThrough(!S.through);
+$('glass').addEventListener('input', e=>setGlass(+e.target.value));
+$('pinBtn').onclick=()=>{ S.pin=!S.pin; $('pinBtn').setAttribute('aria-pressed',S.pin); desk && desk.setPin(S.pin); };
+$('minBtn').onclick=()=>desk && desk.minimize();
+$('closeBtn').onclick=()=>desk && desk.close();
+// While click-through is on, hovering the grip makes the window grabbable again.
+$('grip').addEventListener('mouseenter', ()=>{ if(S.through && desk) desk.setClickThrough(false); });
+shell.addEventListener('mouseleave', ()=>{ if(S.through && desk) desk.setClickThrough(true); });
+setGlass(S.glass);
+if(desk){
+  desk.on('toggle-mode', ()=>setMode(S.mode==='overlay'?'full':'overlay'));
+  desk.on('toggle-through', ()=>{ if(S.mode!=='overlay') setMode('overlay'); setThrough(!S.through); });
+  start();
+}
+}
+</script>
+</body>
+</html>
