@@ -7,12 +7,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+  # Runs on your own Mac (self-hosted runner).
+  # Only for your pushes to main and manual runs — never for pull requests,
+  # because this repo is public and PRs could run untrusted code on your machine.
+  build-macos:
+    if: github.event_name != 'pull_request'
+    runs-on: [self-hosted, macOS]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,8 +24,21 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: false   # unsigned test builds
       - uses: actions/upload-artifact@v4
         with:
-          name: mage-tuner-${{ matrix.os }}
-          path: |
-            dist/*.dmg
-            dist/*.exe
+          name: mage-tuner-macos
+          path: dist/*.dmg
+          if-no-files-found: error
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: npm run dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mage-tuner-windows
+          path: dist/*.exe
           if-no-files-found: error
