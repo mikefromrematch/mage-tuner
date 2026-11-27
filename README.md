@@ -25,7 +25,7 @@ The first time, allow microphone access. On macOS that's under System Settings �
 | Action | How |
 |---|---|
 | Switch to desktop mode | **Desktop mode** button, or `Ctrl/Cmd + Alt + Shift + T` from any app |
-| Back to full mode | Hover the strip → **Expand**, or the same shortcut |
+| Back to window mode | **Window mode** button on the strip, **Attuner → Window mode** in the menu bar (Mac), or the same shortcut |
 | Background opacity | Hover the strip → slider (all the way left = fully transparent) |
 | Click-through | Hover → **Click-through**, or `Ctrl/Cmd + Alt + Shift + C` from any app |
 | Turn click-through off | Click **Turn off click-through** on the strip (it stays clickable), click MAGE Attuner in the Dock/taskbar, use **Attuner → Click-through** in the menu bar (Mac), or the shortcut |

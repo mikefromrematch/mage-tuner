@@ -18,7 +18,6 @@ const stateFile = () => path.join(app.getPath('userData'), 'window-state.json');
 let saved = {};
 let win = null;
 let mode = 'full';
-let pinned = false;
 let through = false; // click-through on/off (owned here, mirrored in the page)
 let hot = false;     // pointer is over the page's "turn off click-through" button
 
@@ -41,8 +40,11 @@ function buildMenu() {
     {
       label: 'Attuner',
       submenu: [
-        { label: 'Desktop mode', accelerator: 'CommandOrControl+Alt+Shift+T', registerAccelerator: false,
-          click: () => win && win.webContents.send('toggle-mode') },
+        { label: 'Window mode', type: 'radio', checked: mode !== 'overlay',
+          click: () => win && win.webContents.send('mode', 'full') },
+        { label: 'Desktop mode', type: 'radio', checked: mode === 'overlay',
+          accelerator: 'CommandOrControl+Alt+Shift+T', registerAccelerator: false,
+          click: () => win && win.webContents.send('mode', 'overlay') },
         { label: 'Click-through', type: 'checkbox', checked: through, enabled: mode === 'overlay',
           accelerator: 'CommandOrControl+Alt+Shift+C', registerAccelerator: false,
           click: () => setThrough(!through) },
@@ -77,6 +79,8 @@ function createWindow() {
     minHeight: s.minHeight,
     transparent: true,
     frame: false,
+    maximizable: false, // double-clicking the strip must not zoom it to full screen
+    fullscreenable: false,
     hasShadow: false,
     backgroundColor: '#00000000',
     title: 'MAGE Attuner',
@@ -103,8 +107,7 @@ function applyMode(next) {
   const b = saved[mode] && onScreen(saved[mode]) ? saved[mode] : { x: cur.x, y: cur.y, width: s.width, height: s.height };
   win.setMinimumSize(s.minWidth, s.minHeight);
   win.setBounds(b);
-  const float = mode === 'overlay' || pinned;
-  win.setAlwaysOnTop(float, 'floating');
+  win.setAlwaysOnTop(mode === 'overlay', 'floating');
   if (process.platform === 'darwin') win.setVisibleOnAllWorkspaces(mode === 'overlay', { visibleOnFullScreen: true });
   if (mode !== 'overlay') setThrough(false);
   buildMenu();
@@ -140,7 +143,6 @@ app.whenReady().then(async () => {
     }
   });
   ipcMain.on('hot', (_e, on) => { hot = !!on; applyIgnore(); });
-  ipcMain.on('pin', (_e, on) => { pinned = !!on; win && win.setAlwaysOnTop(pinned || mode === 'overlay', 'floating'); });
   ipcMain.on('minimize', () => win && win.minimize());
   ipcMain.on('close', () => win && win.close());
 

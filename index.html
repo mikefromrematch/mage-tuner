@@ -108,8 +108,8 @@ body.web.mode-overlay .shell{width:min(380px,100%);box-shadow:none}
 .mode-overlay .note{font-size:64px;grid-row:1/4;align-self:center;text-shadow:0 1px 3px rgba(0,0,0,.7);min-width:1.4em;text-align:center}
 .mode-overlay .leds{margin:0}.mode-overlay .leds i:not(.on):not(.near){background:rgba(145,163,186,.3)}
 .mode-overlay .nums{margin:0;color:var(--ivory);text-shadow:0 1px 2px rgba(0,0,0,.8)}
-.mode-overlay .mini-tools{display:flex;position:absolute;bottom:8px;right:10px;align-items:center;gap:4px;opacity:0;transition:opacity .15s}
-.mode-overlay .shell:hover .mini-tools,.mode-overlay .mini-tools:focus-within{opacity:1}
+.mode-overlay .mini-tools{display:flex;position:absolute;bottom:8px;right:10px;align-items:center;gap:4px;opacity:.55;transition:opacity .15s}
+.mode-overlay .mini-tools:hover,.mode-overlay .mini-tools:focus-within{opacity:1}
 .mini-tools .btn{min-height:28px;height:28px;padding:0 8px;font-size:12px;background:rgba(0,0,0,.55)}
 .mini-tools input{width:70px;accent-color:var(--pink)}
 /* click-through: only the off button stays clickable (main process makes it "hot" on hover) */
@@ -127,7 +127,6 @@ body.through #throughBtn:hover{opacity:1}
 <div class="shell" id="shell" data-state="idle">
   <header class="bar drag">
     <span class="brand"><span class="mark" aria-hidden="true"></span>MAGE <small>ATTUNER</small></span>
-    <button class="btn" id="pinBtn" aria-pressed="false" title="Keep window above others">Pin</button>
     <button class="btn" id="modeBtn" title="Desktop mode — Ctrl/Cmd+Alt+Shift+T">Desktop mode</button>
     <button class="btn icon eonly" id="minBtn" aria-label="Minimize">–</button>
     <button class="btn icon eonly" id="closeBtn" aria-label="Close">×</button>
@@ -167,7 +166,7 @@ body.through #throughBtn:hover{opacity:1}
   <div class="mini-tools nodrag">
     <input type="range" id="glass" min="0" max="1" step="0.05" aria-label="Background opacity" title="Background opacity">
     <button class="btn hot" id="throughBtn" aria-pressed="false" title="Clicks pass through to apps underneath — Ctrl/Cmd+Alt+Shift+C">Click-through</button>
-    <button class="btn" id="backBtn" title="Back to full tuner">Expand</button>
+    <button class="btn" id="backBtn" title="Back to the full tuner window — Ctrl/Cmd+Alt+Shift+T">Window mode</button>
   </div>
 </div>
 
@@ -196,7 +195,7 @@ const store = {
   set(k,v){try{localStorage.setItem('mage-tuner.'+k,JSON.stringify(v))}catch(e){}}
 };
 const S = {preset:store.get('preset','standard'),a4:store.get('a4',440),glass:store.get('glass',.55),
-  device:store.get('device',''),lock:null,mode:'full',through:false,pin:false};
+  device:store.get('device',''),lock:null,mode:'full',through:false};
 if(!PRESETS[S.preset]) S.preset='standard';
 
 const shell=$('shell'), noteEl=$('note'), octEl=$('oct'), centsEl=$('cents'), hzEl=$('hz'), statusEl=$('status');
@@ -394,12 +393,12 @@ $('modeBtn').onclick=()=>setMode('overlay');
 $('backBtn').onclick=()=>setMode('full');
 $('throughBtn').onclick=()=>setThrough(!S.through);
 $('glass').addEventListener('input', e=>setGlass(+e.target.value));
-$('pinBtn').onclick=()=>{ S.pin=!S.pin; $('pinBtn').setAttribute('aria-pressed',S.pin); desk && desk.setPin(S.pin); };
 $('minBtn').onclick=()=>desk && desk.minimize();
 $('closeBtn').onclick=()=>desk && desk.close();
 setGlass(S.glass);
 if(desk){
   desk.on('toggle-mode', ()=>setMode(S.mode==='overlay'?'full':'overlay'));
+  desk.on('mode', m=>setMode(m==='overlay'?'overlay':'full'));
   desk.on('through-changed', v=>{ if(v && S.mode!=='overlay') setMode('overlay'); showThrough(!!v); });
   start();
   fitSoon();

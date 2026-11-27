@@ -5,10 +5,9 @@ contextBridge.exposeInMainWorld('desk', {
   setClickThrough: (on) => ipcRenderer.send('click-through', !!on),
   setHot: (on) => ipcRenderer.send('hot', !!on),
   fitHeight: (h) => ipcRenderer.send('fit-height', h),
-  setPin: (on) => ipcRenderer.send('pin', on),
   minimize: () => ipcRenderer.send('minimize'),
   close: () => ipcRenderer.send('close'),
   on: (channel, fn) => {
-    if (channel === 'toggle-mode' || channel === 'through-changed') ipcRenderer.on(channel, (_e, v) => fn(v));
+    if (channel === 'toggle-mode' || channel === 'mode' || channel === 'through-changed') ipcRenderer.on(channel, (_e, v) => fn(v));
   },
 });
