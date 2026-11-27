@@ -30,6 +30,7 @@ body.web.mode-overlay::after{content:"Preview: in the desktop app this area is y
 .shell{position:relative;background:linear-gradient(160deg,#26364a,#151d2b 45%,#101722);border:1px solid var(--edge);border-radius:18px;display:flex;flex-direction:column;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 -2px 0 rgba(0,0,0,.35)}
 body.desk .shell{height:100vh;width:100vw}
+body.desk.mode-full .shell{overflow-y:auto;overflow-x:hidden}
 body.web .shell{width:min(420px,100%);box-shadow:0 24px 60px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.08)}
 .drag{-webkit-app-region:drag}
 button,select,input,.nodrag{-webkit-app-region:no-drag}
@@ -355,7 +356,7 @@ $('startBtn').addEventListener('click', ()=>{ if(timer){ stop(); idle(); statusE
 function setMode(m){
   S.mode=m; document.body.classList.toggle('mode-overlay', m==='overlay'); document.body.classList.toggle('mode-full', m!=='overlay');
   if(m!=='overlay') setThrough(false);
-  desk && desk.setMode(m);
+  if(desk) desk.setMode(m).then(fitSoon, fitSoon);
 }
 // The desktop app owns the click-through state; the page only asks for changes and shows them.
 function showThrough(v){
@@ -371,6 +372,19 @@ let hot=false;
 function setHot(v){ if(v!==hot){ hot=v; desk && desk.setHot(v); } }
 document.addEventListener('mousemove', e=>{ if(S.through) setHot(!!(e.target.closest && e.target.closest('.hot'))); });
 document.addEventListener('mouseleave', ()=>{ if(S.through) setHot(false); });
+// Full mode: measure the tuner's natural height and ask the window to be at least that tall.
+let fitT=null;
+function fit(){
+  if(!desk || S.mode!=='full') return;
+  const prev=shell.style.height; shell.style.height='auto';
+  const need=Math.ceil(shell.getBoundingClientRect().height);
+  shell.style.height=prev;
+  desk.fitHeight(need);
+}
+const fitSoon=()=>{ clearTimeout(fitT); fitT=setTimeout(fit,120); };
+window.addEventListener('resize', fitSoon);
+$('preset').addEventListener('change', fitSoon);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(fitSoon);
 function setGlass(v){ S.glass=v; document.documentElement.style.setProperty('--glass', v); $('glass').value=v; store.set('glass', v); }
 $('modeBtn').onclick=()=>setMode('overlay');
 $('backBtn').onclick=()=>setMode('full');
@@ -384,6 +398,7 @@ if(desk){
   desk.on('toggle-mode', ()=>setMode(S.mode==='overlay'?'full':'overlay'));
   desk.on('through-changed', v=>{ if(v && S.mode!=='overlay') setMode('overlay'); showThrough(!!v); });
   start();
+  fitSoon();
 }
 }
 </script>

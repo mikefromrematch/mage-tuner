@@ -4,6 +4,7 @@ contextBridge.exposeInMainWorld('desk', {
   setMode: (m) => ipcRenderer.invoke('set-mode', m),
   setClickThrough: (on) => ipcRenderer.send('click-through', !!on),
   setHot: (on) => ipcRenderer.send('hot', !!on),
+  fitHeight: (h) => ipcRenderer.send('fit-height', h),
   setPin: (on) => ipcRenderer.send('pin', on),
   minimize: () => ipcRenderer.send('minimize'),
   close: () => ipcRenderer.send('close'),

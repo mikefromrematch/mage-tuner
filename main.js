@@ -11,7 +11,7 @@ if (process.platform === 'linux') {
 }
 
 const SIZES = {
-  full: { width: 420, height: 680, minWidth: 360, minHeight: 560 },
+  full: { width: 420, height: 780, minWidth: 360, minHeight: 600 },
   overlay: { width: 390, height: 124, minWidth: 330, minHeight: 110 },
 };
 const stateFile = () => path.join(app.getPath('userData'), 'window-state.json');
@@ -126,6 +126,19 @@ app.whenReady().then(async () => {
 
   ipcMain.handle('set-mode', (_e, m) => applyMode(m === 'overlay' ? 'overlay' : 'full'));
   ipcMain.on('click-through', (_e, on) => setThrough(on));
+  // The page reports how tall the full tuner needs to be; grow the window (and its minimum) to fit,
+  // capped to the screen so it never opens taller than the display (the page scrolls then).
+  ipcMain.on('fit-height', (_e, h) => {
+    if (!win || mode !== 'full' || !Number.isFinite(h)) return;
+    const b = win.getBounds();
+    const area = screen.getDisplayMatching(b).workArea;
+    const need = Math.min(Math.ceil(h), area.height);
+    win.setMinimumSize(SIZES.full.minWidth, need);
+    if (b.height < need) {
+      const y = Math.max(area.y, Math.min(b.y, area.y + area.height - need));
+      win.setBounds({ x: b.x, y, width: b.width, height: need });
+    }
+  });
   ipcMain.on('hot', (_e, on) => { hot = !!on; applyIgnore(); });
   ipcMain.on('pin', (_e, on) => { pinned = !!on; win && win.setAlwaysOnTop(pinned || mode === 'overlay', 'floating'); });
   ipcMain.on('minimize', () => win && win.minimize());
