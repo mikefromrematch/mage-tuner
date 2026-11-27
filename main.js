@@ -1,4 +1,4 @@
-// MAGE Tuner — Electron shell.
+// MAGE Attuner — Electron shell.
 // Gives the tuner a frameless, truly transparent window that can float above your DAW.
 const { app, BrowserWindow, ipcMain, globalShortcut, session, systemPreferences, screen, Menu } = require('electron');
 const path = require('path');
@@ -39,7 +39,7 @@ function buildMenu() {
   const template = [
     ...(isMac ? [{ role: 'appMenu' }] : []),
     {
-      label: 'Tuner',
+      label: 'Attuner',
       submenu: [
         { label: 'Desktop mode', accelerator: 'CommandOrControl+Alt+Shift+T', registerAccelerator: false,
           click: () => win && win.webContents.send('toggle-mode') },
@@ -79,7 +79,7 @@ function createWindow() {
     frame: false,
     hasShadow: false,
     backgroundColor: '#00000000',
-    title: 'MAGE Tuner',
+    title: 'MAGE Attuner',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

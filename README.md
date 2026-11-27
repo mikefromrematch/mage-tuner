@@ -1,4 +1,4 @@
-# MAGE Tuner
+# MAGE Attuner
 
 A guitar/bass tuner with two modes:
 
@@ -28,7 +28,7 @@ The first time, allow microphone access. On macOS that's under System Settings �
 | Back to full mode | Hover the strip → **Expand**, or the same shortcut |
 | Background opacity | Hover the strip → slider (all the way left = fully transparent) |
 | Click-through | Hover → **Click-through**, or `Ctrl/Cmd + Alt + Shift + C` from any app |
-| Turn click-through off | Click **Turn off click-through** on the strip (it stays clickable), click MAGE Tuner in the Dock/taskbar, use **Tuner → Click-through** in the menu bar (Mac), or the shortcut |
+| Turn click-through off | Click **Turn off click-through** on the strip (it stays clickable), click MAGE Attuner in the Dock/taskbar, use **Attuner → Click-through** in the menu bar (Mac), or the shortcut |
 | Move the strip | Turn click-through off, then drag it |
 | Lock to one string | Tap a string button (tap again to go back to auto) |
 | Audio interface | Pick it under **Input**. Echo cancellation, noise suppression and auto-gain are turned off so the pitch reads accurately |
@@ -56,11 +56,11 @@ npm run dist
 The Mac build is only ad-hoc signed (no paid Apple Developer ID), so macOS blocks the first launch.
 Click **Done**, then go to **System Settings → Privacy & Security** and click **Open Anyway**.
 
-If an older download says *"MAGE Tuner is damaged and can't be opened"*, run:
+If an older download says *"MAGE Attuner is damaged and can't be opened"*, run:
 
 ```bash
-xattr -cr "/Applications/MAGE Tuner.app"
-codesign --force --deep --sign - "/Applications/MAGE Tuner.app"
+xattr -cr "/Applications/MAGE Attuner.app"
+codesign --force --deep --sign - "/Applications/MAGE Attuner.app"
 ```
 Windows SmartScreen may show a warning too; choose **More info → Run anyway**.
 

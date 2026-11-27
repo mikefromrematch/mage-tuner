@@ -1,7 +1,7 @@
 {
   "name": "mage-tuner",
   "version": "0.1.0",
-  "description": "MAGE guitar tuner with a transparent, always-on-top desktop mode",
+  "description": "MAGE Attuner — guitar tuner with a transparent, always-on-top desktop mode",
   "main": "main.js",
   "author": "mikefromrematch",
   "scripts": {
@@ -14,7 +14,7 @@
   },
   "build": {
     "appId": "com.mikefromrematch.magetuner",
-    "productName": "MAGE Tuner",
+    "productName": "MAGE Attuner",
     "files": [
       "index.html",
       "main.js",
@@ -25,7 +25,7 @@
       "target": "dmg",
       "category": "public.app-category.music",
       "extendInfo": {
-        "NSMicrophoneUsageDescription": "MAGE Tuner listens to your instrument to tune it."
+        "NSMicrophoneUsageDescription": "MAGE Attuner listens to your instrument to tune it."
       },
       "identity": null
     },
