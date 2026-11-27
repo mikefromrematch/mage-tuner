@@ -41,6 +41,14 @@ The tuner saves your settings and window positions for each mode.
 - `main.js`: Electron window: transparent, frameless, always-on-top, click-through, global shortcuts.
 - `preload.js`: a small bridge between the page and the window.
 
+## Logo and icons
+
+- `assets/mage-mark-source.png`: the original MAGE brush M artwork.
+- `assets/mage-mark.png` / `assets/mage-mark-small.png`: transparent cut-outs (full, and a cleaned-up copy without fine splatter for small sizes).
+  The header uses the small one, tinted with MAGE colors; it glows cyan when a string is in tune.
+- `build/icon.icns` (Mac), `build/icon.ico` (Windows), `build/icon.png` (Linux): app icons.
+  Large sizes use the full artwork; 64 px and below use the cleaned-up mark so it stays crisp.
+
 ## Test builds
 
 Every push to `main` runs **Build test apps** in GitHub Actions. That workflow builds an
